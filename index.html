@@ -279,6 +279,7 @@
             openModal() {
                 this.isEditing = false;
                 this.form = { id: Date.now(), name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' };
+                this.detectedUsername = '';
                 this.showModal = true; this.saveStatus = ''; this.showTagInput = false;
             },
             editKol(kol) {
