@@ -4,105 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KOL Manager</title>
-    
-    <!-- Vue.js 3 -->
+    <!-- Vue & Tailwind -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind Config: 奶茶色調 (Milk Tea) -->
+    <!-- Config -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        milktea: {
-                            bg: '#F5F0EB',      // 淺奶茶底色
-                            card: '#FFFFFF',    // 卡片白
-                            text: '#5D4037',    // 深棕文字
-                            accent: '#A1887F',  // 藕粉棕 (按鈕主色)
-                            light: '#D7CCC8',   // 淺棕裝飾
-                            dark: '#3E2723',    // 深色模式底
-                            darkCard: '#4E342E',// 深色模式卡片
-                            input: 'rgba(93, 64, 55, 0.05)' // 輸入框底色
-                        }
+                        milktea: { bg: '#F5F0EB', card: '#FFFFFF', text: '#5D4037', accent: '#A1887F', light: '#D7CCC8', dark: '#3E2723', darkCard: '#4E342E', input: 'rgba(93, 64, 55, 0.05)' }
                     },
-                    fontFamily: {
-                        script: ['"Dancing Script"', 'cursive'],
-                        sans: ['"Noto Sans TC"', 'sans-serif'],
-                    },
-                    boxShadow: {
-                        'soft': '0 4px 20px -2px rgba(161, 136, 127, 0.2)',
-                        'glow': '0 0 15px rgba(161, 136, 127, 0.4)',
-                    }
+                    fontFamily: { script: ['"Dancing Script"', 'cursive'], sans: ['"Noto Sans TC"', 'sans-serif'] },
+                    boxShadow: { 'soft': '0 4px 20px -2px rgba(161, 136, 127, 0.2)', 'glow': '0 0 15px rgba(161, 136, 127, 0.4)' }
                 }
             }
         }
     </script>
-
     <style>
-        /* 隱藏捲軸但保留功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: #F5F0EB;
-        }
-        
+        body { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #F5F0EB; }
         html.dark body { background-color: #3E2723; }
-
-        .glass-nav {
-            background: rgba(245, 240, 235, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(161, 136, 127, 0.1);
-        }
-        
-        html.dark .glass-nav {
-            background: rgba(62, 39, 35, 0.85);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .custom-input {
-            background-color: rgba(93, 64, 55, 0.05);
-            border: 1px solid rgba(93, 64, 55, 0.1);
-            color: #5D4037;
-            transition: all 0.3s;
-        }
-        html.dark .custom-input {
-            background-color: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #EBE0D0;
-        }
-        .custom-input:focus {
-            border-color: #A1887F;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(161, 136, 127, 0.2);
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        .glass-nav { background: rgba(245, 240, 235, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(161, 136, 127, 0.1); }
+        html.dark .glass-nav { background: rgba(62, 39, 35, 0.85); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .custom-input { background-color: rgba(93, 64, 55, 0.05); border: 1px solid rgba(93, 64, 55, 0.1); color: #5D4037; transition: all 0.3s; }
+        html.dark .custom-input { background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); color: #EBE0D0; }
+        .custom-input:focus { border-color: #A1887F; outline: none; box-shadow: 0 0 0 2px rgba(161, 136, 127, 0.2); }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        
         .shake { animation: shake 0.5s infinite; }
-        @keyframes shake {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(2deg); }
-            75% { transform: rotate(-2deg); }
-            100% { transform: rotate(0deg); }
-        }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(2deg); } 75% { transform: rotate(-2deg); } 100% { transform: rotate(0deg); } }
     </style>
 </head>
 <body class="text-milktea-text dark:text-milktea-bg transition-colors duration-300">
@@ -126,7 +62,7 @@
         <button @click="currentView = 'search'" :class="currentView === 'search' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'" class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">自動協尋</button>
     </div>
 
-    <!-- VIEW 1: LIST -->
+    <!-- VIEW: LIST -->
     <main v-if="currentView === 'list'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-32">
         <div class="bg-white dark:bg-milktea-darkCard rounded-2xl p-4 shadow-sm border border-milktea-light/20 transition-colors">
             <div class="flex justify-between items-center mb-2">
@@ -241,9 +177,9 @@
                     </div>
                 </div>
                 
-                <!-- 連結確認區 -->
+                <!-- 連結確認區 (可修改) -->
                 <div v-if="form.platforms.length > 0">
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">確認平台連結 (可修改)</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">平台連結</label>
                     <div class="space-y-2">
                         <div v-for="(p, idx) in form.platforms" :key="idx" class="flex gap-2 items-center">
                             <div class="w-8 flex justify-center text-milktea-accent text-lg"><i :class="getPlatformIcon(p.name)"></i></div>
@@ -306,8 +242,8 @@
                 kols: [], allTags: ['美妝', '旅遊', '美食', '3C', '親子'], activeFilters: [], searchQuery: '', searchPlatform: 'IG',
                 platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YT'], searchResults: [], showTagInput: false, newTagTemp: '',
                 form: { id: null, name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' },
-                // 更新為最新的 GAS URL
-                gasUrl: 'https://script.google.com/macros/s/AKfycbwMVJ21NLGIjpbLIp8FFhpdh2ThhZVKN4XkqTEKV7b13eAOp6Y6GVgP5UecLTSEjXhCfA/exec'
+                // 已更新為新的部署連結
+                gasUrl: 'https://script.google.com/macros/s/AKfycbzyP0vgMogh2MqElG7zmlYLzIWnjHkNTU9R3vgbQLj7nwYANr2fcSqqV-sjs6tASJYgSw/exec'
             }
         },
         computed: {
@@ -343,7 +279,6 @@
             openModal() {
                 this.isEditing = false;
                 this.form = { id: Date.now(), name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' };
-                this.detectedUsername = '';
                 this.showModal = true; this.saveStatus = ''; this.showTagInput = false;
             },
             editKol(kol) {
@@ -366,7 +301,7 @@
                 if(!url) return;
                 let platName = '其他'; let handle = '';
                 
-                // 1. Detect Main Platform
+                // Detect Main Platform
                 if (url.includes('instagram.com')) { platName = 'IG'; const parts = url.split('/').filter(p=>p); handle = parts[parts.length-1].replace(/\?.*$/, ''); }
                 else if (url.includes('facebook.com')) { platName = 'FB'; const parts = url.split('/').filter(p=>p); handle = parts[parts.length-1]; }
                 else if (url.includes('youtube.com')) { platName = 'YT'; if(url.includes('@')) handle = url.split('@')[1]; }
@@ -376,15 +311,13 @@
                 this.form.mainPlatform = platName;
                 if(!this.form.name && handle) this.form.name = handle;
                 
-                // 2. Only Add Main Platform (No Smart Gen)
+                // Add Main Platform ONLY (No extra smart generation)
                 const existingIdx = this.form.platforms.findIndex(p => p.url === url);
                 if (existingIdx === -1) {
                     this.form.platforms.unshift({ name: platName, url: url });
                 } else {
                     this.form.platforms[existingIdx].name = platName;
                 }
-                
-                // Removed the code block that generates fake links for other platforms
             },
             removePlatform(idx) { this.form.platforms.splice(idx, 1); },
             getPlatformIcon(name) {
