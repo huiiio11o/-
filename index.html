@@ -231,7 +231,7 @@
             </div>
             <div class="space-y-5 max-h-[65vh] overflow-y-auto no-scrollbar px-1">
                 <div>
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結 (輸入後自動帶出)</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-link absolute left-3 top-3.5 text-gray-400 text-xs"></i>
@@ -243,7 +243,7 @@
                 
                 <!-- 連結確認區 -->
                 <div v-if="form.platforms.length > 0">
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">平台連結</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">確認平台連結 (可修改)</label>
                     <div class="space-y-2">
                         <div v-for="(p, idx) in form.platforms" :key="idx" class="flex gap-2 items-center">
                             <div class="w-8 flex justify-center text-milktea-accent text-lg"><i :class="getPlatformIcon(p.name)"></i></div>
@@ -306,7 +306,8 @@
                 kols: [], allTags: ['美妝', '旅遊', '美食', '3C', '親子'], activeFilters: [], searchQuery: '', searchPlatform: 'IG',
                 platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YT'], searchResults: [], showTagInput: false, newTagTemp: '',
                 form: { id: null, name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' },
-                gasUrl: 'https://script.google.com/macros/s/AKfycbwiLZsbR070r1b5n6Gf5HJ5XbQVM1x3I65DqtJhOEcR9lmwPGEXJ1b3UL27Vl-jkF8xMQ/exec'
+                // 已更新為最新網址
+                gasUrl: 'https://script.google.com/macros/s/AKfycbxjVvUbewXQXW88bkBg4PDxoRTzQ-tHb0-CHRTdNR87_XJMgO2Io5b3iyDZXjcm1vpX1A/exec'
             }
         },
         computed: {
@@ -363,6 +364,8 @@
                 const url = this.form.mainLink;
                 if(!url) return;
                 let platName = '其他'; let handle = '';
+                
+                // 1. Detect Main Platform
                 if (url.includes('instagram.com')) { platName = 'IG'; const parts = url.split('/').filter(p=>p); handle = parts[parts.length-1].replace(/\?.*$/, ''); }
                 else if (url.includes('facebook.com')) { platName = 'FB'; const parts = url.split('/').filter(p=>p); handle = parts[parts.length-1]; }
                 else if (url.includes('youtube.com')) { platName = 'YT'; if(url.includes('@')) handle = url.split('@')[1]; }
@@ -372,13 +375,15 @@
                 this.form.mainPlatform = platName;
                 if(!this.form.name && handle) this.form.name = handle;
                 
-                // Only add the main platform (No smart generation)
+                // 2. Only Add Main Platform (No Smart Gen)
                 const existingIdx = this.form.platforms.findIndex(p => p.url === url);
                 if (existingIdx === -1) {
                     this.form.platforms.unshift({ name: platName, url: url });
                 } else {
                     this.form.platforms[existingIdx].name = platName;
                 }
+                
+                // Removed the code block that generates fake links for other platforms
             },
             removePlatform(idx) { this.form.platforms.splice(idx, 1); },
             getPlatformIcon(name) {
