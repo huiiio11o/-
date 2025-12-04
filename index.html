@@ -289,8 +289,8 @@
             <h2 class="text-lg font-bold mb-4 text-center">雲端設定</h2>
             <div class="mb-4">
                 <label class="block text-xs font-bold text-milktea-accent mb-1">Google Apps Script URL</label>
-                <textarea v-model="gasUrl" rows="3" placeholder="https://script.google.com/..." class="w-full p-3 rounded-xl custom-input text-xs break-all"></textarea>
-                <p class="text-[10px] text-gray-400 mt-1">請貼上您的 Google Apps Script 網頁應用程式網址</p>
+                <textarea v-model="gasUrl" rows="3" class="w-full p-3 rounded-xl custom-input text-xs break-all"></textarea>
+                <p class="text-[10px] text-gray-400 mt-1">請確認您的 GAS 部署權限為「任何人」</p>
             </div>
             <div class="flex flex-col gap-3">
                 <button @click="syncToGoogleSheet(null, true)" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm">
@@ -319,7 +319,7 @@
                 
                 <!-- Smart Link Input -->
                 <div>
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結 (輸入後自動帶出所有平台)</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-link absolute left-3 top-3.5 text-gray-400 text-xs"></i>
@@ -371,11 +371,11 @@
 
                 <!-- Platform List (Preview) -->
                 <div v-if="form.platforms.length > 0">
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">已連結平台</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">已連結平台 (可刪除不需要的)</label>
                     <div class="flex flex-wrap gap-2">
                         <span v-for="(p, idx) in form.platforms" :key="idx" class="px-3 py-1.5 rounded-lg bg-white dark:bg-milktea-dark text-xs flex items-center gap-2 border border-milktea-light/30">
                             <i :class="getPlatformIcon(p.name)" class="text-milktea-accent"></i>
-                            <span class="max-w-[100px] truncate opacity-70">{{ p.url }}</span>
+                            <span class="max-w-[100px] truncate opacity-70">{{ p.name }}</span>
                             <button @click="removePlatform(idx)" class="text-red-400 ml-1"><i class="fa-solid fa-times"></i></button>
                         </span>
                     </div>
@@ -581,14 +581,30 @@
 
                 this.form.mainPlatform = platName;
                 if(!this.form.name && handle) this.form.name = handle;
-                if(handle) this.detectedUsername = handle; // Enable smart buttons
-
-                // Add Main Link
+                
+                // Smart Gen logic: Add Main platform + others
                 const existingIdx = this.form.platforms.findIndex(p => p.url === url);
                 if (existingIdx === -1) {
                     this.form.platforms.unshift({ name: platName, url: url });
                 } else {
                     this.form.platforms[existingIdx].name = platName;
+                }
+                
+                // If handle detected, auto add other platforms
+                if(handle) {
+                    const platformsToGen = ['IG', 'FB', 'YT', 'TikTok'];
+                    platformsToGen.forEach(p => {
+                        // Skip if already has this platform type to avoid duplicates logic
+                        if(this.form.platforms.some(existing => existing.name === p)) return;
+                        
+                        let newUrl = '';
+                        if(p === 'IG') newUrl = `https://instagram.com/${handle}`;
+                        else if(p === 'FB') newUrl = `https://facebook.com/${handle}`;
+                        else if(p === 'YT') newUrl = `https://youtube.com/@${handle}`;
+                        else if(p === 'TikTok') newUrl = `https://tiktok.com/@${handle}`;
+                        
+                        this.form.platforms.push({ name: p, url: newUrl });
+                    });
                 }
             },
             
@@ -698,12 +714,13 @@
                 fetch(this.gasUrl, {
                     method: 'POST',
                     mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CRITICAL FIX for GAS
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    this.saveStatus = '同步請求已發送';
-                    setTimeout(() => this.saveStatus = '', 3000);
-                }).catch(() => {
+                    this.saveStatus = '同步請求已發送 (請檢查試算表)';
+                    setTimeout(() => this.saveStatus = '', 5000);
+                }).catch(e => {
+                    console.error(e);
                     this.saveStatus = '同步失敗';
                 });
             },
