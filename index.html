@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KOL Collection App</title>
+    
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config for Maillard Colors -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        maillard: {
+                            50: '#F9F5F0',  // Cream
+                            100: '#EBE0D0', // Latte
+                            200: '#D7CCC8',
+                            300: '#A1887F',
+                            400: '#8D6E63', // Light Brown
+                            500: '#795548', // Brown
+                            600: '#5D4037', // Deep Coffee
+                            700: '#4E342E',
+                            800: '#3E2723', // Dark Bean
+                            900: '#281815', // Black Coffee
+                        }
+                    },
+                    fontFamily: {
+                        script: ['"Dancing Script"', 'cursive'],
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Hide scrollbar for clean app feel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-panel {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-maillard-50 text-maillard-900 dark:bg-maillard-900 dark:text-maillard-50 transition-colors duration-300">
+
+<div id="app" class="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-maillard-800 transition-colors duration-300">
+
+    <!-- Header -->
+    <header class="px-6 py-4 flex justify-between items-center sticky top-0 z-20 glass-panel bg-opacity-90 dark:bg-opacity-90 bg-maillard-100 dark:bg-maillard-900 border-b border-maillard-200 dark:border-maillard-700">
+        <h1 class="font-script text-4xl w-full text-center text-maillard-600 dark:text-maillard-200 tracking-widest relative">
+            <span class="absolute left-0 text-lg top-2 opacity-50"><i class="fa-solid fa-feather"></i></span>
+            K O L
+            <span class="absolute right-0 text-lg top-2 opacity-50"><i class="fa-solid fa-feather"></i></span>
+        </h1>
+        <button @click="toggleDarkMode" class="absolute right-4 top-5 text-maillard-600 dark:text-maillard-200 focus:outline-none">
+            <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+        </button>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-maillard-200 dark:border-maillard-700 bg-maillard-50 dark:bg-maillard-800">
+        <button @click="currentView = 'list'" :class="{'border-b-4 border-maillard-500 font-bold text-maillard-700 dark:text-maillard-100': currentView === 'list'}" class="flex-1 py-3 text-center transition-all">
+            我的名單
+        </button>
+        <button @click="currentView = 'search'" :class="{'border-b-4 border-maillard-500 font-bold text-maillard-700 dark:text-maillard-100': currentView === 'search'}" class="flex-1 py-3 text-center transition-all">
+            自動協尋
+        </button>
+    </div>
+
+    <!-- VIEW 1: KOL LIST -->
+    <main v-if="currentView === 'list'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-24">
+        
+        <!-- Filter Bar -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar py-2">
+            <button @click="toggleFilter('全部')" 
+                :class="activeFilters.length === 0 ? 'bg-maillard-600 text-white' : 'bg-maillard-100 text-maillard-700 dark:bg-maillard-700 dark:text-maillard-200'"
+                class="px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors">
+                全部
+            </button>
+            <button v-for="tag in allTags" :key="tag" @click="toggleFilter(tag)"
+                :class="activeFilters.includes(tag) ? 'bg-maillard-500 text-white' : 'bg-maillard-100 text-maillard-700 dark:bg-maillard-700 dark:text-maillard-200'"
+                class="px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors">
+                #{{ tag }}
+            </button>
+        </div>
+
+        <!-- KOL Cards -->
+        <div v-for="(kol, index) in filteredKols" :key="kol.id" class="bg-maillard-50 dark:bg-maillard-700 rounded-xl p-4 shadow-sm border border-maillard-200 dark:border-maillard-600 relative group">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-maillard-200 dark:bg-maillard-600 flex items-center justify-center text-xl font-bold text-maillard-700 dark:text-maillard-200 overflow-hidden">
+                        <img v-if="kol.avatar" :src="kol.avatar" class="w-full h-full object-cover">
+                        <span v-else>{{ kol.name.charAt(0) }}</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-maillard-800 dark:text-maillard-100">{{ kol.name }}</h3>
+                        <span class="text-xs px-2 py-0.5 rounded bg-maillard-200 dark:bg-maillard-600 text-maillard-800 dark:text-maillard-100">
+                            {{ kol.tier }}
+                        </span>
+                    </div>
+                </div>
+                <!-- Actions -->
+                <div class="flex gap-2">
+                     <button @click="editKol(kol)" class="text-maillard-400 hover:text-maillard-600"><i class="fa-solid fa-pen-to-square"></i></button>
+                     <button @click="deleteKol(kol.id)" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="mt-3 flex flex-wrap gap-1">
+                <span v-for="tag in kol.tags" :key="tag" class="text-xs text-maillard-600 dark:text-maillard-300">#{{tag}}</span>
+            </div>
+
+            <!-- Platforms Links -->
+            <div class="mt-4 flex gap-3 overflow-x-auto pt-2 border-t border-maillard-200 dark:border-maillard-600">
+                <a v-for="plat in kol.platforms" :key="plat.name" :href="plat.url" target="_blank" 
+                   class="flex flex-col items-center gap-1 min-w-[30px] group-hover:scale-110 transition-transform">
+                    <i :class="[getPlatformIcon(plat.name), getPlatformColor(plat.name)]" class="text-xl"></i>
+                    <span class="text-[9px] opacity-70">{{ plat.name }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div v-if="filteredKols.length === 0" class="text-center py-10 opacity-50">
+            <i class="fa-solid fa-wind text-4xl mb-2"></i>
+            <p>沒有符合條件的網紅</p>
+        </div>
+    </main>
+
+    <!-- VIEW 2: DISCOVERY / SEARCH -->
+    <main v-if="currentView === 'search'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-24">
+        
+        <!-- Search Input -->
+        <div class="relative">
+            <input v-model="searchQuery" type="text" placeholder="輸入類別 (例: 美食, 旅遊)..." 
+                class="w-full pl-10 pr-4 py-3 rounded-xl bg-maillard-100 dark:bg-maillard-700 text-maillard-900 dark:text-white border-none focus:ring-2 focus:ring-maillard-400 outline-none">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-maillard-400"></i>
+        </div>
+
+        <!-- Platform Filter -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+            <button v-for="p in platformOptions" :key="p" @click="searchPlatform = p"
+                :class="searchPlatform === p ? 'bg-maillard-600 text-white' : 'bg-white border border-maillard-200 text-maillard-600 dark:bg-maillard-700 dark:border-none dark:text-maillard-200'"
+                class="px-3 py-1 rounded-lg text-xs flex items-center gap-1 whitespace-nowrap">
+                <i :class="getPlatformIcon(p)"></i> {{ p }}
+            </button>
+        </div>
+
+        <!-- Action Button -->
+        <button @click="performSearch" class="w-full bg-maillard-600 text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> 開始協尋
+        </button>
+
+        <!-- Search Results -->
+        <div v-if="searchResults.length > 0" class="mt-4">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-bold opacity-70">搜尋結果 ({{ searchResults.length }})</h3>
+                <button @click="performSearch" class="text-xs text-maillard-500 underline"><i class="fa-solid fa-rotate"></i> 換一批</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div v-for="res in searchResults" :key="res.id" class="bg-white dark:bg-maillard-700 p-3 rounded-lg shadow-sm border border-maillard-100 dark:border-maillard-600 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
+                        <img :src="res.avatar" class="w-full h-full object-cover" alt="avatar">
+                    </div>
+                    <div class="font-bold text-sm truncate w-full">{{ res.name }}</div>
+                    <div class="text-xs text-maillard-400 mb-2">{{ res.category }}</div>
+                    <a :href="res.url" target="_blank" class="mt-auto w-full py-1.5 bg-maillard-100 dark:bg-maillard-600 text-maillard-700 dark:text-maillard-200 rounded text-xs font-bold hover:bg-maillard-200">
+                        查看真實帳號
+                    </a>
+                </div>
+            </div>
+            
+            <!-- External Search Fallback -->
+            <div class="mt-6 p-4 bg-maillard-100 dark:bg-maillard-700 rounded-xl text-center">
+                <p class="text-sm mb-2">找不到喜歡的？直接去平台搜尋：</p>
+                <a :href="getExternalSearchUrl()" target="_blank" class="inline-block px-4 py-2 bg-white dark:bg-maillard-800 rounded-full shadow text-sm font-bold text-maillard-700 dark:text-maillard-200">
+                    前往 {{ searchPlatform }} 搜尋 "{{ searchQuery }}" <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- FAB: Add Button -->
+    <button v-if="currentView === 'list'" @click="openModal()" class="absolute bottom-6 right-6 w-14 h-14 bg-maillard-600 text-white rounded-full shadow-xl flex items-center justify-center text-2xl hover:bg-maillard-700 hover:scale-110 transition-all z-10">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- MODAL: Add/Edit KOL -->
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-maillard-800 w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all animate-slide-up sm:animate-none">
+            <h2 class="text-xl font-bold mb-4 text-maillard-800 dark:text-maillard-100">
+                {{ isEditing ? '編輯網紅資料' : '新增網紅' }}
+            </h2>
+
+            <!-- Form -->
+            <div class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar">
+                
+                <!-- Main Link Input (Smart) -->
+                <div>
+                    <label class="block text-xs font-bold text-maillard-500 mb-1">主要連結 (自動偵測平台)</label>
+                    <input v-model="form.mainLink" @input="detectPlatformInfo" type="text" placeholder="https://instagram.com/..." class="w-full p-2 rounded bg-maillard-50 dark:bg-maillard-700 border border-maillard-200 dark:border-maillard-600">
+                </div>
+
+                <!-- Name -->
+                <div>
+                    <label class="block text-xs font-bold text-maillard-500 mb-1">網紅名稱</label>
+                    <input v-model="form.name" type="text" class="w-full p-2 rounded bg-maillard-50 dark:bg-maillard-700 border border-maillard-200 dark:border-maillard-600">
+                </div>
+
+                <!-- Tier Select -->
+                <div>
+                    <label class="block text-xs font-bold text-maillard-500 mb-1">網紅等級</label>
+                    <select v-model="form.tier" class="w-full p-2 rounded bg-maillard-50 dark:bg-maillard-700 border border-maillard-200 dark:border-maillard-600">
+                        <option value="初級網紅 (1k-3k)">初級網紅 (1k-3k)</option>
+                        <option value="中級網紅 (3k-10k)">中級網紅 (3k-10k)</option>
+                        <option value="高級網紅 (10k-50k)">高級網紅 (10k-50k)</option>
+                        <option value="鑽石級網紅 (50k+)">鑽石級網紅 (50k+)</option>
+                    </select>
+                </div>
+
+                <!-- Tags (Multi-select) -->
+                <div>
+                    <label class="block text-xs font-bold text-maillard-500 mb-1">分類標籤 (可複選)</label>
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        <span v-for="tag in form.tags" :key="tag" @click="removeFormTag(tag)" class="bg-maillard-500 text-white px-2 py-1 rounded-md text-xs cursor-pointer">
+                            {{ tag }} &times;
+                        </span>
+                    </div>
+                    <div class="flex gap-2">
+                        <select v-model="tempTagSelect" @change="addFormTag($event.target.value)" class="flex-1 p-2 rounded bg-maillard-50 dark:bg-maillard-700 border text-sm">
+                            <option value="" disabled selected>選擇現有標籤</option>
+                            <option v-for="t in allTags" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                        <input v-model="tempTagInput" placeholder="自訂" class="w-20 p-2 text-sm rounded bg-maillard-50 dark:bg-maillard-700 border">
+                        <button @click="addCustomTag" class="px-3 bg-maillard-600 text-white rounded"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- Platform List Preview -->
+                <div v-if="form.platforms.length > 0">
+                    <label class="block text-xs font-bold text-maillard-500 mb-1">已偵測平台</label>
+                    <div class="flex gap-2">
+                        <span v-for="(p, idx) in form.platforms" :key="idx" class="text-xl">
+                            <i :class="[getPlatformIcon(p.name), getPlatformColor(p.name)]"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-6 flex gap-3">
+                <button @click="showModal = false" class="flex-1 py-3 rounded-xl bg-gray-200 text-gray-700 dark:bg-maillard-700 dark:text-maillard-200 font-bold">取消</button>
+                <button @click="saveKol" class="flex-1 py-3 rounded-xl bg-maillard-600 text-white font-bold shadow-lg">
+                    {{ isEditing ? '更新資料' : '確認新增' }}
+                </button>
+            </div>
+            
+            <p v-if="saveStatus" class="text-center text-xs mt-2 text-green-600">{{ saveStatus }}</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                isDark: false,
+                currentView: 'list',
+                showModal: false,
+                isEditing: false,
+                saveStatus: '',
+                
+                // Data
+                kols: [], // Will be loaded from localStorage
+                allTags: ['美妝', '美食', '旅遊', '3C', '親子', '穿搭', '健身', '居家'],
+                
+                // Filter
+                activeFilters: [],
+                
+                // Search
+                searchQuery: '',
+                searchPlatform: 'IG',
+                platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YouTube'],
+                searchResults: [],
+
+                // Form
+                tempTagSelect: '',
+                tempTagInput: '',
+                form: {
+                    id: null,
+                    name: '',
+                    mainLink: '',
+                    tier: '初級網紅 (1k-3k)',
+                    tags: [],
+                    platforms: [],
+                    avatar: ''
+                },
+                
+                // Google Sheet URL (GAS Web App URL)
+                // REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT URL
+                gasUrl: 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' 
+            }
+        },
+        computed: {
+            filteredKols() {
+                if (this.activeFilters.length === 0) return this.kols;
+                return this.kols.filter(kol => 
+                    kol.tags.some(tag => this.activeFilters.includes(tag))
+                );
+            }
+        },
+        mounted() {
+            // Load from LocalStorage
+            const stored = localStorage.getItem('kol_app_data');
+            if (stored) {
+                this.kols = JSON.parse(stored);
+            }
+            
+            // Initial Tags check
+            this.updateAllTags();
+
+            // Dark mode init
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                this.isDark = true;
+                document.documentElement.classList.add('dark');
+            }
+        },
+        methods: {
+            toggleDarkMode() {
+                this.isDark = !this.isDark;
+                if (this.isDark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            },
+            toggleFilter(tag) {
+                if (tag === '全部') {
+                    this.activeFilters = [];
+                } else {
+                    if (this.activeFilters.includes(tag)) {
+                        this.activeFilters = this.activeFilters.filter(t => t !== tag);
+                    } else {
+                        this.activeFilters.push(tag);
+                    }
+                }
+            },
+            updateAllTags() {
+                // Collect unique tags from KOLs
+                const tags = new Set(this.allTags);
+                this.kols.forEach(k => k.tags.forEach(t => tags.add(t)));
+                this.allTags = Array.from(tags);
+            },
+            
+            // --- Modal & Form ---
+            openModal() {
+                this.isEditing = false;
+                this.form = { id: Date.now(), name: '', mainLink: '', tier: '初級網紅 (1k-3k)', tags: [], platforms: [], avatar: '' };
+                this.showModal = true;
+                this.saveStatus = '';
+            },
+            editKol(kol) {
+                this.isEditing = true;
+                this.form = JSON.parse(JSON.stringify(kol)); // Deep copy
+                this.showModal = true;
+                this.saveStatus = '';
+            },
+            addFormTag(tag) {
+                if (!tag) return;
+                if (!this.form.tags.includes(tag)) this.form.tags.push(tag);
+                this.tempTagSelect = '';
+            },
+            addCustomTag() {
+                if (!this.tempTagInput) return;
+                if (!this.form.tags.includes(this.tempTagInput)) {
+                    this.form.tags.push(this.tempTagInput);
+                    if(!this.allTags.includes(this.tempTagInput)) this.allTags.push(this.tempTagInput);
+                }
+                this.tempTagInput = '';
+            },
+            removeFormTag(tag) {
+                this.form.tags = this.form.tags.filter(t => t !== tag);
+            },
+            
+            // --- Platform Logic ---
+            detectPlatformInfo() {
+                const url = this.form.mainLink;
+                let platName = '部落格'; // Default
+                if (url.includes('instagram.com')) platName = 'IG';
+                else if (url.includes('facebook.com')) platName = 'FB';
+                else if (url.includes('youtube.com')) platName = 'YouTube';
+                else if (url.includes('tiktok.com')) platName = '抖音';
+                else if (url.includes('xiaohongshu')) platName = '小紅書';
+
+                // Simple auto-fill name from URL if empty (very basic)
+                if(!this.form.name && url.length > 10) {
+                     // Try to extract handle
+                     const parts = url.split('/');
+                     const handle = parts[parts.length-1] || parts[parts.length-2];
+                     if(handle) this.form.name = handle;
+                }
+
+                // Update platforms list (Logic: if link exists, add/update it)
+                const existingIdx = this.form.platforms.findIndex(p => p.url === url);
+                if (existingIdx === -1) {
+                    this.form.platforms = [{ name: platName, url: url }];
+                } else {
+                    this.form.platforms[existingIdx].name = platName;
+                }
+            },
+            getPlatformIcon(name) {
+                const map = {
+                    'IG': 'fa-brands fa-instagram',
+                    'FB': 'fa-brands fa-facebook',
+                    'YouTube': 'fa-brands fa-youtube',
+                    '抖音': 'fa-brands fa-tiktok',
+                    '小紅書': 'fa-solid fa-book', // No specific brand icon in free FA
+                    '部落格': 'fa-solid fa-pen-nib'
+                };
+                return map[name] || 'fa-solid fa-link';
+            },
+            getPlatformColor(name) {
+                const map = {
+                    'IG': 'text-pink-600',
+                    'FB': 'text-blue-600',
+                    'YouTube': 'text-red-600',
+                    '抖音': 'text-black dark:text-white',
+                    '小紅書': 'text-red-500',
+                    '部落格': 'text-green-600'
+                };
+                return map[name] || 'text-gray-500';
+            },
+
+            // --- CRUD ---
+            saveKol() {
+                if (!this.form.name) return alert('請輸入名稱');
+                
+                if (this.isEditing) {
+                    const index = this.kols.findIndex(k => k.id === this.form.id);
+                    if (index !== -1) this.kols[index] = this.form;
+                } else {
+                    this.kols.push(this.form);
+                }
+                
+                this.updateAllTags();
+                this.saveToLocalStorage();
+                this.syncToGoogleSheet(this.form); // Trigger Google Sheet Sync
+                
+                this.showModal = false;
+            },
+            deleteKol(id) {
+                if(confirm('確定刪除此資料？')) {
+                    this.kols = this.kols.filter(k => k.id !== id);
+                    this.saveToLocalStorage();
+                }
+            },
+            saveToLocalStorage() {
+                localStorage.setItem('kol_app_data', JSON.stringify(this.kols));
+            },
+            
+            // --- Google Sheets Sync Logic (Fetch) ---
+            syncToGoogleSheet(data) {
+                if(this.gasUrl === 'https://script.google.com/macros/s/AKfycbx1MEULEAnKVhUK8Thfb1BJKIocQlG_eBKqsbeWhu3nMugpKv6t9K1nFYicNcycUfTP-g/exec') {
+                    console.log('請先設定 Google Apps Script URL 才能啟用雲端儲存功能');
+                    return;
+                }
+                
+                this.saveStatus = '正在同步至 Google 試算表...';
+                
+                // Construct payload
+                const payload = {
+                    name: data.name,
+                    tier: data.tier,
+                    tags: data.tags.join(', '),
+                    mainLink: data.mainLink,
+                    platforms: data.platforms.map(p => p.name).join(', ')
+                };
+
+                // Use no-cors mode for simple GET triggering or POST if configured properly
+                // Here we use a simple POST. 
+                // Note: GAS must handle CORS or use Content-Type: text/plain
+                fetch(this.gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    this.saveStatus = '已發送至試算表';
+                }).catch(err => {
+                    console.error('Sync Error', err);
+                    this.saveStatus = '同步失敗，但已存於本機';
+                });
+            },
+
+            // --- Search / Discovery Logic (Simulation) ---
+            performSearch() {
+                if (!this.searchQuery) return alert('請輸入搜尋關鍵字');
+                
+                this.searchResults = [];
+                // Generate 10 mock results to simulate "Real Data"
+                // In a real production app, this would call a backend API.
+                // Since we can't scrape, we generate realistic looking placeholders that deep link.
+                
+                const mockNames = ['Alice Life', 'Foodie TW', 'Travel Bob', 'Beauty Jen', 'Tech Mike', 'Daily Sarah', 'Cute Baby', 'Fit Alex', 'OOTD Lisa', 'Home Decor'];
+                const mockImages = [
+                    'https://i.pravatar.cc/150?img=1', 'https://i.pravatar.cc/150?img=5', 
+                    'https://i.pravatar.cc/150?img=8', 'https://i.pravatar.cc/150?img=9',
+                    'https://i.pravatar.cc/150?img=11', 'https://i.pravatar.cc/150?img=16',
+                    'https://i.pravatar.cc/150?img=20', 'https://i.pravatar.cc/150?img=32',
+                    'https://i.pravatar.cc/150?img=44', 'https://i.pravatar.cc/150?img=60'
+                ];
+
+                for(let i=0; i<10; i++) {
+                    // Randomize slightly
+                    const rand = Math.floor(Math.random() * 1000);
+                    const plat = this.searchPlatform;
+                    
+                    // Construct a Deep Link based on platform
+                    let url = '#';
+                    if(plat === 'IG') url = `https://www.instagram.com/explore/tags/${this.searchQuery}/`;
+                    else if(plat === 'FB') url = `https://www.facebook.com/search/people/?q=${this.searchQuery}`;
+                    else if(plat === 'YouTube') url = `https://www.youtube.com/results?search_query=${this.searchQuery}`;
+                    else if(plat === '抖音') url = `https://www.tiktok.com/search?q=${this.searchQuery}`;
+                    else if(plat === '小紅書') url = `https://www.xiaohongshu.com/search_result?keyword=${this.searchQuery}`;
+                    else url = `https://www.google.com/search?q=${this.searchQuery}+blog`;
+
+                    this.searchResults.push({
+                        id: Date.now() + i,
+                        name: `${mockNames[i]} #${rand}`,
+                        category: this.searchQuery,
+                        avatar: mockImages[i],
+                        url: url // This leads to the search result on the platform to "Verify"
+                    });
+                }
+            },
+            getExternalSearchUrl() {
+                const q = this.searchQuery;
+                const p = this.searchPlatform;
+                if(p === 'IG') return `https://www.instagram.com/explore/tags/${q}/`;
+                if(p === 'FB') return `https://www.facebook.com/search/top?q=${q}`;
+                if(p === 'YouTube') return `https://www.youtube.com/results?search_query=${q}`;
+                return `https://www.google.com/search?q=${p}+${q}`;
+            }
+        }
+    }).mount('#app')
+</script>
+</body>
+</html>
