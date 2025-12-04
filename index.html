@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KOL Collection App</title>
+    <title>KOL Manager</title>
     
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -17,26 +17,22 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind Config -->
+    <!-- Tailwind Config: 奶茶色調 (Milk Tea) -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        coffee: {
-                            50: '#F9F5F0',
-                            100: '#EBE0D0',
-                            200: '#D7CCC8',
-                            300: '#A1887F',
-                            400: '#8D6E63',
-                            500: '#795548',
-                            600: '#5D4037',
-                            700: '#4E342E',
-                            800: '#3E2723', // 深咖啡背景
-                            900: '#281815', // 更深
-                            accent: '#C67C4E', // 亮橘色按鈕 (接近截圖)
-                            input: '#2A2522'   // 輸入框背景
+                        milktea: {
+                            bg: '#F5F0EB',      // 淺奶茶底色
+                            card: '#FFFFFF',    // 卡片白
+                            text: '#5D4037',    // 深棕文字
+                            accent: '#A1887F',  // 藕粉棕 (按鈕主色)
+                            light: '#D7CCC8',   // 淺棕裝飾
+                            dark: '#3E2723',    // 深色模式底
+                            darkCard: '#4E342E',// 深色模式卡片
+                            input: 'rgba(93, 64, 55, 0.05)' // 輸入框底色
                         }
                     },
                     fontFamily: {
@@ -44,8 +40,8 @@
                         sans: ['"Noto Sans TC"', 'sans-serif'],
                     },
                     boxShadow: {
-                        'glow': '0 0 15px rgba(198, 124, 78, 0.5)',
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        'soft': '0 4px 20px -2px rgba(161, 136, 127, 0.2)',
+                        'glow': '0 0 15px rgba(161, 136, 127, 0.4)',
                     }
                 }
             }
@@ -53,46 +49,50 @@
     </script>
 
     <style>
-        /* 隱藏捲軸 */
+        /* 隱藏捲軸但保留功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         body {
             font-family: 'Noto Sans TC', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            background-color: #1a1614; /* 預設深色背景 */
+            background-color: #F5F0EB; /* 預設淺色 */
+        }
+        
+        /* 深色模式背景覆蓋 */
+        html.dark body {
+            background-color: #3E2723;
         }
 
         /* 玻璃擬態效果 */
         .glass-nav {
-            background: rgba(40, 24, 21, 0.65);
+            background: rgba(245, 240, 235, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(161, 136, 127, 0.1);
+        }
+        
+        html.dark .glass-nav {
+            background: rgba(62, 39, 35, 0.85);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Modal 特殊樣式 */
-        .modal-bg {
-            background-color: #3E2723; /* fallback */
-            background: linear-gradient(145deg, #3E2723 0%, #281815 100%);
-        }
-        
+        /* 輸入框樣式 */
         .custom-input {
-            background-color: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #EBE0D0;
+            background-color: rgba(93, 64, 55, 0.05);
+            border: 1px solid rgba(93, 64, 55, 0.1);
+            color: #5D4037;
             transition: all 0.3s;
         }
+        html.dark .custom-input {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #EBE0D0;
+        }
         .custom-input:focus {
-            border-color: #C67C4E;
-            background-color: rgba(0,0,0,0.4);
+            border-color: #A1887F;
             outline: none;
+            box-shadow: 0 0 0 2px rgba(161, 136, 127, 0.2);
         }
 
         /* 動畫 */
@@ -103,141 +103,175 @@
         .animate-slide-up {
             animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        
+        /* 標籤刪除模式震動效果 */
+        .shake {
+            animation: shake 0.5s infinite;
+        }
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+            100% { transform: rotate(0deg); }
+        }
     </style>
 </head>
-<body class="bg-coffee-50 text-coffee-900 dark:bg-[#1a1614] dark:text-coffee-100 transition-colors duration-300">
+<body class="text-milktea-text dark:text-milktea-bg transition-colors duration-300">
 
-<div id="app" class="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden flex flex-col transition-colors duration-300 bg-white dark:bg-[#1a1614]">
+<div id="app" class="max-w-md mx-auto min-h-screen relative shadow-2xl overflow-hidden flex flex-col transition-colors duration-300 bg-milktea-bg dark:bg-milktea-dark">
 
-    <!-- 頂部 Header (玻璃擬態) -->
-    <header class="px-6 py-4 flex justify-between items-center sticky top-0 z-30 glass-nav">
-        <h1 class="font-script text-3xl text-coffee-600 dark:text-coffee-100 relative w-full text-center">
+    <!-- 頂部 Header -->
+    <header class="px-6 py-4 flex justify-between items-center sticky top-0 z-30 glass-nav transition-colors duration-300">
+        <!-- 左側：雲端設定按鈕 -->
+        <button @click="showSettings = true" class="w-10 h-10 rounded-full flex items-center justify-center text-milktea-accent hover:bg-milktea-light/20 transition-colors">
+            <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+        </button>
+
+        <h1 class="font-script text-3xl text-milktea-text dark:text-milktea-bg tracking-wider">
             K O L
-            <span class="absolute right-0 top-1 text-sm font-sans font-normal opacity-50 tracking-normal">Collection</span>
         </h1>
-        <button @click="toggleDarkMode" class="absolute right-4 top-5 text-coffee-600 dark:text-coffee-200 focus:outline-none">
-            <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+        
+        <!-- 右側：深淺色切換 -->
+        <button @click="toggleDarkMode" class="w-10 h-10 rounded-full flex items-center justify-center text-milktea-text dark:text-milktea-bg transition-colors focus:outline-none">
+            <!-- 淺色時顯示月亮(去深色)，深色時顯示太陽(去淺色) -->
+            <i :class="isDark ? 'fa-solid fa-sun text-yellow-400' : 'fa-solid fa-moon text-milktea-text'"></i>
         </button>
     </header>
 
-    <!-- 導航 Tabs (玻璃擬態 + 發光特效) -->
-    <div class="flex sticky top-[68px] z-20 px-4 pt-2 pb-2 gap-4 bg-transparent backdrop-blur-sm">
+    <!-- 導航 Tabs (玻璃擬態) -->
+    <div class="flex sticky top-[72px] z-20 px-4 pb-2 gap-3 bg-milktea-bg/80 dark:bg-milktea-dark/80 backdrop-blur-md transition-colors duration-300">
         <button @click="currentView = 'list'" 
-            :class="currentView === 'list' ? 'text-coffee-accent border-coffee-accent shadow-glow' : 'text-coffee-400 border-transparent opacity-60'"
-            class="flex-1 py-2 text-center rounded-xl border border-white/5 bg-white/5 dark:bg-black/20 backdrop-blur-md transition-all duration-300 font-bold text-sm tracking-wide">
+            :class="currentView === 'list' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'"
+            class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">
             我的名單
         </button>
         <button @click="currentView = 'search'" 
-            :class="currentView === 'search' ? 'text-coffee-accent border-coffee-accent shadow-glow' : 'text-coffee-400 border-transparent opacity-60'"
-            class="flex-1 py-2 text-center rounded-xl border border-white/5 bg-white/5 dark:bg-black/20 backdrop-blur-md transition-all duration-300 font-bold text-sm tracking-wide">
+            :class="currentView === 'search' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'"
+            class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">
             自動協尋
         </button>
     </div>
 
     <!-- VIEW 1: KOL LIST -->
-    <main v-if="currentView === 'list'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-28">
+    <main v-if="currentView === 'list'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-32">
         
-        <!-- 可收合篩選欄位 -->
-        <div class="bg-coffee-100 dark:bg-[#2A2522] rounded-2xl p-3 transition-all duration-300">
-            <div @click="isFilterExpanded = !isFilterExpanded" class="flex justify-between items-center cursor-pointer px-1">
-                <span class="text-xs font-bold text-coffee-500 dark:text-coffee-300"><i class="fa-solid fa-filter mr-1"></i> 分類篩選</span>
-                <i :class="isFilterExpanded ? 'rotate-180' : ''" class="fa-solid fa-chevron-down text-xs text-coffee-400 transition-transform"></i>
+        <!-- 可收合篩選欄位 + 編輯模式 -->
+        <div class="bg-white dark:bg-milktea-darkCard rounded-2xl p-4 shadow-sm border border-milktea-light/20 transition-colors">
+            <div class="flex justify-between items-center mb-2">
+                <div @click="isFilterExpanded = !isFilterExpanded" class="flex items-center cursor-pointer">
+                    <span class="text-sm font-bold text-milktea-text dark:text-milktea-light"><i class="fa-solid fa-filter mr-1"></i> 分類篩選</span>
+                    <i :class="isFilterExpanded ? 'rotate-180' : ''" class="ml-2 fa-solid fa-chevron-down text-xs text-milktea-accent transition-transform"></i>
+                </div>
+                <button @click="isTagEditing = !isTagEditing" :class="isTagEditing ? 'text-red-400 bg-red-100 dark:bg-red-900/30' : 'text-milktea-accent'" class="text-xs px-2 py-1 rounded transition-colors">
+                    {{ isTagEditing ? '完成' : '編輯標籤' }}
+                </button>
             </div>
             
-            <div v-show="isFilterExpanded" class="mt-3 flex flex-wrap gap-2 transition-all">
+            <div v-show="isFilterExpanded" class="flex flex-wrap gap-2 transition-all">
                 <button @click="toggleFilter('全部')" 
-                    :class="activeFilters.length === 0 ? 'bg-coffee-accent text-white shadow-glow' : 'bg-white dark:bg-[#3E2723] text-coffee-600 dark:text-coffee-300'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
+                    :class="activeFilters.length === 0 ? 'bg-milktea-accent text-white' : 'bg-milktea-bg dark:bg-black/20 text-milktea-text dark:text-milktea-light'"
+                    class="px-4 py-1.5 rounded-full text-xs font-medium transition-all">
                     全部
                 </button>
-                <button v-for="tag in allTags" :key="tag" @click="toggleFilter(tag)"
-                    :class="activeFilters.includes(tag) ? 'bg-coffee-accent text-white shadow-glow' : 'bg-white dark:bg-[#3E2723] text-coffee-600 dark:text-coffee-300'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-transparent hover:border-coffee-400">
-                    {{ tag }}
-                </button>
+                <div v-for="tag in allTags" :key="tag" class="relative group">
+                    <button @click="isTagEditing ? null : toggleFilter(tag)"
+                        :class="[
+                            activeFilters.includes(tag) ? 'bg-milktea-accent text-white' : 'bg-milktea-bg dark:bg-black/20 text-milktea-text dark:text-milktea-light',
+                            isTagEditing ? 'shake cursor-default' : 'cursor-pointer'
+                        ]"
+                        class="px-4 py-1.5 rounded-full text-xs font-medium transition-all border border-transparent">
+                        {{ tag }}
+                    </button>
+                    <!-- 刪除按鈕 -->
+                    <button v-if="isTagEditing" @click="deleteGlobalTag(tag)" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] shadow-sm z-10">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- KOL Cards -->
-        <div v-for="kol in filteredKols" :key="kol.id" class="glass-card rounded-2xl p-4 relative group bg-white dark:bg-[#231e1c] shadow-lg border-l-4 border-coffee-accent">
+        <div v-for="kol in filteredKols" :key="kol.id" class="bg-white dark:bg-milktea-darkCard rounded-3xl p-5 relative shadow-soft border border-milktea-light/10 transition-colors">
             <div class="flex justify-between items-start">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     <!-- Avatar -->
-                    <div class="w-14 h-14 rounded-full bg-coffee-200 dark:bg-coffee-600 flex items-center justify-center text-xl font-bold text-coffee-700 dark:text-coffee-200 overflow-hidden border-2 border-coffee-100 dark:border-coffee-700">
+                    <div class="w-16 h-16 rounded-full bg-milktea-bg dark:bg-black/20 flex items-center justify-center text-xl font-bold text-milktea-accent overflow-hidden border border-milktea-light/30">
                         <img v-if="kol.avatar" :src="kol.avatar" class="w-full h-full object-cover">
                         <span v-else>{{ kol.name.charAt(0) }}</span>
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg text-coffee-800 dark:text-coffee-50">{{ kol.name }}</h3>
+                        <h3 class="font-bold text-lg text-milktea-text dark:text-milktea-bg tracking-wide">{{ kol.name }}</h3>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-coffee-100 dark:bg-coffee-700 text-coffee-600 dark:text-coffee-300 border border-coffee-200 dark:border-coffee-600">
+                            <span class="text-[10px] px-2 py-0.5 rounded-md bg-milktea-bg dark:bg-black/30 text-milktea-text dark:text-milktea-light">
                                 {{ kol.tier }}
                             </span>
                         </div>
                     </div>
                 </div>
-                <!-- Actions -->
-                <button @click="editKol(kol)" class="w-8 h-8 rounded-full bg-coffee-50 dark:bg-coffee-800 flex items-center justify-center text-coffee-400 hover:text-coffee-accent transition-colors">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                <!-- Card Actions -->
+                <button @click="editKol(kol)" class="w-8 h-8 rounded-full flex items-center justify-center text-milktea-accent hover:bg-milktea-bg dark:hover:bg-white/10 transition-colors">
+                    <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
 
             <!-- Tags -->
-            <div class="mt-3 flex flex-wrap gap-1.5 pl-[68px]">
-                <span v-for="tag in kol.tags" :key="tag" class="text-[10px] text-coffee-500 dark:text-coffee-400">#{{tag}}</span>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <span v-for="tag in kol.tags" :key="tag" class="text-[10px] px-2 py-1 rounded bg-milktea-bg dark:bg-black/20 text-milktea-accent">#{{tag}}</span>
             </div>
 
-            <!-- Platforms Links -->
-            <div class="mt-4 flex gap-4 pl-2">
+            <!-- Platforms Links (Icons) -->
+            <div class="mt-5 pt-3 border-t border-milktea-light/20 flex gap-5 overflow-x-auto no-scrollbar">
                 <a v-for="plat in kol.platforms" :key="plat.name" :href="plat.url" target="_blank" 
-                   class="flex flex-col items-center gap-1 group/icon hover:-translate-y-1 transition-transform">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center bg-coffee-50 dark:bg-[#2A2522] shadow-sm">
-                        <i :class="[getPlatformIcon(plat.name), getPlatformColor(plat.name)]" class="text-sm"></i>
+                   class="flex flex-col items-center gap-1 group transition-transform active:scale-95">
+                    <div :class="getPlatformColor(plat.name)" class="text-xl">
+                        <i :class="getPlatformIcon(plat.name)"></i>
                     </div>
+                    <span class="text-[9px] opacity-60">{{ plat.name }}</span>
                 </a>
             </div>
             
-            <!-- Delete Button (Hidden by default, shown on card hover area roughly) -->
-            <button @click.stop="deleteKol(kol.id)" class="absolute top-4 right-14 text-red-300 hover:text-red-500 opacity-50 hover:opacity-100">
-                <i class="fa-solid fa-trash text-xs"></i>
+            <!-- Delete Button (Bottom Right) -->
+            <button @click.stop="deleteKol(kol.id)" class="absolute bottom-4 right-4 text-milktea-light hover:text-red-400 transition-colors p-2">
+                <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>
 
-        <div v-if="filteredKols.length === 0" class="flex flex-col items-center justify-center py-20 opacity-40">
-            <i class="fa-solid fa-mug-hot text-5xl mb-4 text-coffee-300"></i>
-            <p class="text-coffee-400">尚無資料，請新增網紅</p>
+        <div v-if="filteredKols.length === 0" class="flex flex-col items-center justify-center py-24 opacity-40">
+            <i class="fa-solid fa-mug-hot text-6xl mb-4 text-milktea-accent"></i>
+            <p class="text-milktea-text dark:text-milktea-light">尚無網紅資料</p>
         </div>
     </main>
 
     <!-- VIEW 2: SEARCH (Simulation) -->
-    <main v-if="currentView === 'search'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-28">
-        <div class="bg-[#2A2522] p-4 rounded-2xl shadow-inner border border-white/5">
-            <label class="text-xs font-bold text-coffee-400 mb-2 block">我想找...</label>
+    <main v-if="currentView === 'search'" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-32">
+        <div class="bg-white dark:bg-milktea-darkCard p-5 rounded-3xl shadow-soft border border-milktea-light/10">
+            <label class="text-xs font-bold text-milktea-accent mb-2 block ml-1">我想找...</label>
             <div class="relative">
                 <input v-model="searchQuery" type="text" placeholder="輸入關鍵字 (例: 美食, 穿搭)..." 
-                    class="w-full pl-10 pr-4 py-3 rounded-xl bg-black/30 text-white border border-white/10 focus:border-coffee-accent outline-none">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-coffee-500"></i>
+                    class="w-full pl-10 pr-4 py-3.5 rounded-2xl custom-input text-sm">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-milktea-accent"></i>
             </div>
-            <div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
+            <div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar py-1">
                 <button v-for="p in platformOptions" :key="p" @click="searchPlatform = p"
-                    :class="searchPlatform === p ? 'bg-coffee-accent text-white' : 'bg-white/5 text-coffee-300'"
-                    class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors border border-white/5">
+                    :class="searchPlatform === p ? 'bg-milktea-accent text-white' : 'bg-milktea-bg dark:bg-black/20 text-milktea-text dark:text-milktea-light'"
+                    class="px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-colors flex items-center gap-1">
                     <i :class="getPlatformIcon(p)"></i> {{ p }}
                 </button>
             </div>
-            <button @click="performSearch" class="w-full mt-4 bg-gradient-to-r from-coffee-600 to-coffee-500 hover:from-coffee-500 hover:to-coffee-accent text-white py-3 rounded-xl font-bold shadow-lg active:scale-95 transition-all">
-                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 開始 AI 協尋
+            <button @click="performSearch" class="w-full mt-6 bg-milktea-accent text-white py-3.5 rounded-2xl font-bold shadow-soft active:scale-95 transition-all flex justify-center items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 開始 AI 協尋
             </button>
         </div>
 
         <!-- Results -->
         <div v-if="searchResults.length > 0" class="grid grid-cols-2 gap-3">
-            <div v-for="res in searchResults" :key="res.id" class="bg-[#231e1c] p-3 rounded-xl border border-white/5 shadow-lg flex flex-col items-center text-center">
-                <div class="w-16 h-16 rounded-full bg-gray-700 mb-2 overflow-hidden border-2 border-coffee-800">
+            <div v-for="res in searchResults" :key="res.id" class="bg-white dark:bg-milktea-darkCard p-3 rounded-2xl shadow-sm flex flex-col items-center text-center">
+                <div class="w-14 h-14 rounded-full bg-gray-200 mb-2 overflow-hidden">
                     <img :src="res.avatar" class="w-full h-full object-cover">
                 </div>
-                <div class="font-bold text-sm text-coffee-100 truncate w-full">{{ res.name }}</div>
-                <a :href="res.url" target="_blank" class="mt-2 text-xs text-coffee-accent border border-coffee-accent/30 px-3 py-1 rounded-full hover:bg-coffee-accent hover:text-white transition-colors">
+                <div class="font-bold text-sm truncate w-full mb-1">{{ res.name }}</div>
+                <div class="text-[10px] text-milktea-accent mb-3">{{ res.category }}</div>
+                <a :href="res.url" target="_blank" class="w-full py-2 bg-milktea-bg dark:bg-black/20 rounded-xl text-xs font-bold text-milktea-text dark:text-milktea-light">
                     查看帳號
                 </a>
             </div>
@@ -245,98 +279,136 @@
     </main>
 
     <!-- FAB: Add Button -->
-    <button v-if="currentView === 'list'" @click="openModal()" class="absolute bottom-8 right-6 w-14 h-14 bg-coffee-accent text-white rounded-full shadow-glow flex items-center justify-center text-2xl hover:scale-110 transition-transform z-20">
+    <button v-if="currentView === 'list'" @click="openModal()" class="fixed bottom-8 right-6 w-16 h-16 bg-milktea-accent text-white rounded-full shadow-glow flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-all z-20">
         <i class="fa-solid fa-plus"></i>
     </button>
 
-    <!-- MODAL: Custom Design (依據截圖復刻) -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-        
-        <!-- Modal Card -->
-        <div class="bg-[#3E2723] w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl transform transition-all animate-slide-up border border-white/10 text-[#EBE0D0]">
+    <!-- MODAL: Settings (Google Sheet) -->
+    <div v-if="showSettings" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
+        <div class="bg-white dark:bg-milktea-darkCard w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-slide-up">
+            <h2 class="text-lg font-bold mb-4 text-center">雲端設定</h2>
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-milktea-accent mb-1">Google Apps Script URL</label>
+                <textarea v-model="gasUrl" rows="3" placeholder="https://script.google.com/..." class="w-full p-3 rounded-xl custom-input text-xs break-all"></textarea>
+                <p class="text-[10px] text-gray-400 mt-1">https://script.google.com/macros/s/AKfycbx1MEULEAnKVhUK8Thfb1BJKIocQlG_eBKqsbeWhu3nMugpKv6t9K1nFYicNcycUfTP-g/exec</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button @click="syncToGoogleSheet(null, true)" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm">
+                    <i class="fa-solid fa-rotate mr-1"></i> 立即手動同步所有資料
+                </button>
+                <button @click="showSettings = false" class="w-full py-3 bg-gray-200 dark:bg-black/20 text-gray-600 dark:text-gray-300 rounded-xl font-bold text-sm">
+                    關閉
+                </button>
+            </div>
+            <p v-if="saveStatus" class="text-center text-xs mt-3 text-milktea-accent">{{ saveStatus }}</p>
+        </div>
+    </div>
+
+    <!-- MODAL: Add/Edit KOL -->
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4">
+        <div class="bg-milktea-bg dark:bg-milktea-darkCard w-full max-w-md rounded-t-[30px] sm:rounded-3xl p-6 pb-10 shadow-2xl transform transition-all animate-slide-up border-t border-white/20">
             
-            <!-- Modal Header -->
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold tracking-wide">{{ isEditing ? '編輯網紅' : '新增網紅' }}</h2>
-                <button @click="showModal = false" class="text-coffee-300 hover:text-white transition-colors">
+                <h2 class="text-xl font-bold text-milktea-text dark:text-milktea-light">{{ isEditing ? '編輯資料' : '新增網紅' }}</h2>
+                <button @click="showModal = false" class="text-gray-400 hover:text-milktea-accent p-2">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
 
-            <!-- Scrollable Content -->
-            <div class="space-y-5 max-h-[70vh] overflow-y-auto no-scrollbar pb-2">
+            <div class="space-y-5 max-h-[65vh] overflow-y-auto no-scrollbar px-1">
                 
-                <!-- Main Link & Auto Fill -->
+                <!-- Smart Link Input -->
                 <div>
-                    <label class="block text-xs font-bold text-coffee-300 mb-1.5">主平台連結 (URL)</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
-                            <span class="absolute left-3 top-3 text-coffee-500"><i class="fa-solid fa-link"></i></span>
-                            <input v-model="form.mainLink" type="text" placeholder="https://..." 
-                                class="w-full pl-9 pr-3 py-2.5 rounded-lg custom-input text-sm">
+                            <i class="fa-solid fa-link absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+                            <input v-model="form.mainLink" type="text" placeholder="貼上 IG / FB / YT 連結..." 
+                                class="w-full pl-8 pr-3 py-3 rounded-xl custom-input text-sm">
                         </div>
-                        <button @click="autoFillInfo" class="bg-white/10 hover:bg-white/20 text-coffee-100 px-4 py-2 rounded-lg text-xs flex items-center gap-1 border border-white/10 transition-colors whitespace-nowrap">
+                        <button @click="autoFillInfo" class="bg-milktea-accent text-white px-4 rounded-xl text-xs flex items-center gap-1 shadow-sm whitespace-nowrap active:scale-95 transition-transform">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> 自動帶入
                         </button>
                     </div>
                 </div>
 
-                <!-- Grid: Name & Platform -->
+                <!-- Detected Username & Suggestions (New Feature) -->
+                <div v-if="detectedUsername" class="bg-white/50 dark:bg-black/10 p-3 rounded-xl border border-milktea-accent/20">
+                    <p class="text-[10px] text-milktea-accent mb-2">偵測到帳號: <b>{{ detectedUsername }}</b>，一鍵新增其他平台：</p>
+                    <div class="flex gap-2 flex-wrap">
+                        <button v-for="p in ['IG','FB','YT','TikTok']" :key="p" @click="addSuggestedPlatform(p)" 
+                            class="px-3 py-1 bg-white dark:bg-milktea-dark shadow-sm rounded-lg text-xs flex items-center gap-1 border border-transparent hover:border-milktea-accent transition-colors">
+                            <i :class="getPlatformIcon(p)" :class="getPlatformColor(p)"></i> {{ p }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Basic Info Grid -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-coffee-300 mb-1.5">名稱</label>
-                        <input v-model="form.name" type="text" class="w-full px-3 py-2.5 rounded-lg custom-input text-sm">
+                        <label class="block text-xs font-bold text-milktea-accent mb-1.5">名稱</label>
+                        <input v-model="form.name" type="text" class="w-full px-3 py-3 rounded-xl custom-input text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-coffee-300 mb-1.5">主平台</label>
-                        <input v-model="form.mainPlatform" readonly type="text" class="w-full px-3 py-2.5 rounded-lg bg-black/20 border border-white/5 text-coffee-400 text-sm cursor-not-allowed">
+                        <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台</label>
+                        <input v-model="form.mainPlatform" readonly type="text" class="w-full px-3 py-3 rounded-xl bg-gray-100 dark:bg-black/30 text-gray-500 text-sm">
                     </div>
                 </div>
 
                 <!-- Tier -->
                 <div>
-                    <label class="block text-xs font-bold text-coffee-300 mb-1.5">網紅等級</label>
-                    <select v-model="form.tier" class="w-full px-3 py-2.5 rounded-lg custom-input text-sm appearance-none">
-                        <option class="text-black" value="初級 (1k-3k)">初級 (1k-3k)</option>
-                        <option class="text-black" value="中級 (3k-10k)">中級 (3k-10k)</option>
-                        <option class="text-black" value="高級 (10k-50k)">高級 (10k-50k)</option>
-                        <option class="text-black" value="鑽石級 (50k+)">鑽石級 (50k+)</option>
-                    </select>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">網紅等級</label>
+                    <div class="relative">
+                        <select v-model="form.tier" class="w-full px-3 py-3 rounded-xl custom-input text-sm appearance-none bg-transparent relative z-10">
+                            <option class="text-black" value="初級 (1k-3k)">初級 (1k-3k)</option>
+                            <option class="text-black" value="中級 (3k-10k)">中級 (3k-10k)</option>
+                            <option class="text-black" value="高級 (10k-50k)">高級 (10k-50k)</option>
+                            <option class="text-black" value="鑽石級 (50k+)">鑽石級 (50k+)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-gray-400 text-xs z-0"></i>
+                    </div>
+                </div>
+
+                <!-- Platform List (Preview) -->
+                <div v-if="form.platforms.length > 0">
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">已連結平台</label>
+                    <div class="flex flex-wrap gap-2">
+                        <span v-for="(p, idx) in form.platforms" :key="idx" class="px-3 py-1.5 rounded-lg bg-white dark:bg-milktea-dark text-xs flex items-center gap-2 border border-milktea-light/30">
+                            <i :class="getPlatformIcon(p.name)" class="text-milktea-accent"></i>
+                            <span class="max-w-[100px] truncate opacity-70">{{ p.url }}</span>
+                            <button @click="removePlatform(idx)" class="text-red-400 ml-1"><i class="fa-solid fa-times"></i></button>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Tags -->
                 <div>
-                    <label class="block text-xs font-bold text-coffee-300 mb-2">分類標籤 (可複選)</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-2">分類標籤</label>
                     <div class="flex flex-wrap gap-2">
-                        <!-- Existing Tags -->
                         <button v-for="tag in allTags" :key="tag" @click="toggleFormTag(tag)"
-                            :class="form.tags.includes(tag) ? 'bg-coffee-accent border-coffee-accent text-white' : 'bg-transparent border-coffee-500 text-coffee-300'"
-                            class="px-4 py-1.5 rounded-full border text-xs transition-all">
+                            :class="form.tags.includes(tag) ? 'bg-milktea-accent text-white' : 'bg-transparent border border-milktea-accent/40 text-milktea-text dark:text-milktea-light'"
+                            class="px-4 py-1.5 rounded-full text-xs transition-all">
                             {{ tag }}
                         </button>
-                        <!-- Add New Tag (Simple Text Input trigger) -->
-                        <button @click="openTagInput" class="px-4 py-1.5 rounded-full border border-dashed border-coffee-400 text-coffee-accent text-xs flex items-center gap-1 hover:bg-white/5">
+                        <button @click="openTagInput" class="px-4 py-1.5 rounded-full border border-dashed border-milktea-accent text-milktea-accent text-xs flex items-center gap-1">
                             <i class="fa-solid fa-plus"></i> 新增
                         </button>
                     </div>
-                    <!-- Hidden Mini Input for new tag -->
                     <div v-if="showTagInput" class="mt-2 flex gap-2">
-                        <input v-model="newTagTemp" placeholder="輸入新標籤..." class="flex-1 px-3 py-1.5 rounded custom-input text-xs">
-                        <button @click="addNewTag" class="px-3 py-1 bg-coffee-accent text-white rounded text-xs">OK</button>
+                        <input v-model="newTagTemp" placeholder="新標籤名稱" class="flex-1 px-3 py-2 rounded-xl custom-input text-xs">
+                        <button @click="addNewTag" class="px-4 bg-milktea-accent text-white rounded-xl text-xs">OK</button>
                     </div>
                 </div>
 
             </div>
 
             <!-- Footer Actions -->
-            <div class="mt-8 flex gap-4">
-                <button @click="showModal = false" class="flex-1 py-3 text-coffee-300 hover:text-white text-sm font-bold">取消</button>
-                <button @click="saveKol" class="flex-[2] py-3 rounded-xl bg-coffee-accent text-white font-bold text-sm shadow-glow hover:bg-[#D88D5E] transition-colors">
+            <div class="mt-8 flex gap-3">
+                <button @click="showModal = false" class="flex-1 py-3.5 rounded-xl bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-bold text-sm">取消</button>
+                <button @click="saveKol" class="flex-[2] py-3.5 rounded-xl bg-milktea-accent text-white font-bold text-sm shadow-lg hover:brightness-110 transition-all">
                     儲存資料
                 </button>
             </div>
-            
-            <p v-if="saveStatus" class="text-center text-xs mt-2 text-green-400">{{ saveStatus }}</p>
         </div>
     </div>
 
@@ -348,12 +420,14 @@
     createApp({
         data() {
             return {
-                isDark: true, // Default Dark based on screenshot style
+                isDark: false,
                 currentView: 'list',
                 showModal: false,
+                showSettings: false, // Google Sheet Modal
                 isEditing: false,
                 saveStatus: '',
-                isFilterExpanded: false, // Filter collapse state
+                isFilterExpanded: true, 
+                isTagEditing: false, // Tag delete mode
                 
                 // Data
                 kols: [],
@@ -371,19 +445,20 @@
                 // Form
                 showTagInput: false,
                 newTagTemp: '',
+                detectedUsername: '', // For smart adding
                 form: {
                     id: null,
                     name: '',
                     mainLink: '',
-                    mainPlatform: '', // Display only
+                    mainPlatform: '', 
                     tier: '初級 (1k-3k)',
                     tags: [],
-                    platforms: [], // Stores structured objects
+                    platforms: [],
                     avatar: ''
                 },
                 
-                // GAS URL (Replace with yours)
-                gasUrl: 'https://script.google.com/macros/s/AKfycbx1MEULEAnKVhUK8Thfb1BJKIocQlG_eBKqsbeWhu3nMugpKv6t9K1nFYicNcycUfTP-g/exec' 
+                // GAS URL
+                gasUrl: '' 
             }
         },
         computed: {
@@ -395,16 +470,26 @@
             }
         },
         mounted() {
-            const stored = localStorage.getItem('kol_app_data_v2');
-            if (stored) {
-                this.kols = JSON.parse(stored);
-                // Extract tags from existing data to ensure list is up to date
-                const tagSet = new Set(this.allTags);
-                this.kols.forEach(k => k.tags.forEach(t => tagSet.add(t)));
-                this.allTags = Array.from(tagSet);
+            // Load Data
+            const stored = localStorage.getItem('kol_app_data_v3');
+            if (stored) this.kols = JSON.parse(stored);
+            
+            // Load Settings
+            const storedGas = localStorage.getItem('kol_gas_url');
+            if (storedGas) this.gasUrl = storedGas;
+
+            // Sync tags
+            const tagSet = new Set(this.allTags);
+            this.kols.forEach(k => k.tags.forEach(t => tagSet.add(t)));
+            this.allTags = Array.from(tagSet);
+
+            // Check System Dark Mode
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                // User prefers dark, but let's default to light (milk tea) unless toggled manually previously
+                // Or just follow system:
+                // this.isDark = true;
+                // document.documentElement.classList.add('dark');
             }
-            // Force Dark Mode initially for that "Premium" look
-            document.documentElement.classList.add('dark');
         },
         methods: {
             toggleDarkMode() {
@@ -423,11 +508,22 @@
                     }
                 }
             },
+            deleteGlobalTag(tag) {
+                if(confirm(`確定刪除標籤「${tag}」嗎？`)) {
+                    this.allTags = this.allTags.filter(t => t !== tag);
+                    // Optionally remove from all KOLs too
+                    this.kols.forEach(k => {
+                        k.tags = k.tags.filter(t => t !== tag);
+                    });
+                    this.saveToLocalStorage();
+                }
+            },
             
             // --- Modal & Form ---
             openModal() {
                 this.isEditing = false;
                 this.form = { id: Date.now(), name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' };
+                this.detectedUsername = '';
                 this.showModal = true;
                 this.saveStatus = '';
                 this.showTagInput = false;
@@ -435,6 +531,7 @@
             editKol(kol) {
                 this.isEditing = true;
                 this.form = JSON.parse(JSON.stringify(kol));
+                this.detectedUsername = ''; // Reset detection logic on edit
                 this.showModal = true;
                 this.saveStatus = '';
             },
@@ -445,9 +542,7 @@
                     this.form.tags.push(tag);
                 }
             },
-            openTagInput() {
-                this.showTagInput = true;
-            },
+            openTagInput() { this.showTagInput = true; },
             addNewTag() {
                 if(this.newTagTemp) {
                     if(!this.allTags.includes(this.newTagTemp)) this.allTags.push(this.newTagTemp);
@@ -457,44 +552,74 @@
                 }
             },
             
-            // --- Auto Fill / Platform Logic ---
+            // --- Auto Fill & Smart Cross Platform ---
             autoFillInfo() {
                 const url = this.form.mainLink;
                 if(!url) return;
 
                 let platName = '其他';
-                if (url.includes('instagram.com')) platName = 'IG';
-                else if (url.includes('facebook.com')) platName = 'FB';
-                else if (url.includes('youtube.com')) platName = 'YT';
-                else if (url.includes('tiktok.com')) platName = '抖音';
-                else if (url.includes('xiaohongshu')) platName = '小紅書';
+                let handle = '';
 
-                this.form.mainPlatform = platName;
-
-                // Simulate "AI" Name Extraction
-                if(!this.form.name && url.length > 10) {
-                     const parts = url.split('/');
-                     // simple logic to grab last part of url
-                     const handle = parts[parts.length-1] || parts[parts.length-2];
-                     if(handle) this.form.name = handle.replace(/\?.*$/, ''); 
+                // Identify Platform & Handle
+                if (url.includes('instagram.com')) {
+                    platName = 'IG';
+                    const parts = url.split('/').filter(p => p);
+                    handle = parts[parts.length-1].replace(/\?.*$/, '');
+                } else if (url.includes('facebook.com')) {
+                    platName = 'FB';
+                    const parts = url.split('/').filter(p => p);
+                    handle = parts[parts.length-1];
+                } else if (url.includes('youtube.com')) {
+                    platName = 'YT';
+                    if(url.includes('@')) handle = url.split('@')[1];
+                } else if (url.includes('tiktok.com')) {
+                    platName = '抖音';
+                    if(url.includes('@')) handle = url.split('@')[1].replace(/\?.*$/, '');
+                } else if (url.includes('xiaohongshu')) {
+                    platName = '小紅書';
                 }
 
-                // Update Platform List logic
+                this.form.mainPlatform = platName;
+                if(!this.form.name && handle) this.form.name = handle;
+                if(handle) this.detectedUsername = handle; // Enable smart buttons
+
+                // Add Main Link
                 const existingIdx = this.form.platforms.findIndex(p => p.url === url);
                 if (existingIdx === -1) {
-                    // Make sure main platform is first or handled
                     this.form.platforms.unshift({ name: platName, url: url });
                 } else {
                     this.form.platforms[existingIdx].name = platName;
                 }
             },
             
+            addSuggestedPlatform(plat) {
+                if(!this.detectedUsername) return;
+                let newUrl = '';
+                const u = this.detectedUsername;
+
+                if(plat === 'IG') newUrl = `https://instagram.com/${u}`;
+                else if(plat === 'FB') newUrl = `https://facebook.com/${u}`;
+                else if(plat === 'YT') newUrl = `https://youtube.com/@${u}`;
+                else if(plat === 'TikTok') newUrl = `https://tiktok.com/@${u}`;
+
+                // Check duplicate
+                if(!this.form.platforms.some(p => p.name === plat)) {
+                    this.form.platforms.push({ name: plat, url: newUrl });
+                }
+            },
+            
+            removePlatform(idx) {
+                this.form.platforms.splice(idx, 1);
+            },
+
             getPlatformIcon(name) {
                 const map = {
                     'IG': 'fa-brands fa-instagram',
                     'FB': 'fa-brands fa-facebook',
                     'YT': 'fa-brands fa-youtube',
+                    'YouTube': 'fa-brands fa-youtube',
                     '抖音': 'fa-brands fa-tiktok',
+                    'TikTok': 'fa-brands fa-tiktok',
                     '小紅書': 'fa-solid fa-book', 
                     '部落格': 'fa-solid fa-pen-nib'
                 };
@@ -502,21 +627,22 @@
             },
             getPlatformColor(name) {
                  const map = {
-                    'IG': 'text-pink-500',
+                    'IG': 'text-pink-400',
                     'FB': 'text-blue-500',
                     'YT': 'text-red-500',
-                    '抖音': 'text-white',
+                    'YouTube': 'text-red-500',
+                    '抖音': 'text-black dark:text-white',
+                    'TikTok': 'text-black dark:text-white',
                     '小紅書': 'text-red-400',
                     '部落格': 'text-green-500'
                 };
                 return map[name] || 'text-gray-400';
             },
 
-            // --- CRUD ---
+            // --- CRUD & Sync ---
             saveKol() {
                 if (!this.form.name) return alert('請輸入名稱');
                 
-                // Ensure main platform is set
                 if (!this.form.mainPlatform && this.form.platforms.length > 0) {
                     this.form.mainPlatform = this.form.platforms[0].name;
                 }
@@ -529,7 +655,10 @@
                 }
                 
                 this.saveToLocalStorage();
-                this.syncToGoogleSheet(this.form);
+                
+                // Auto sync if URL exists
+                if(this.gasUrl) this.syncToGoogleSheet(this.form, false);
+                
                 this.showModal = false;
             },
             deleteKol(id) {
@@ -539,20 +668,32 @@
                 }
             },
             saveToLocalStorage() {
-                localStorage.setItem('kol_app_data_v2', JSON.stringify(this.kols));
+                localStorage.setItem('kol_app_data_v3', JSON.stringify(this.kols));
+                localStorage.setItem('kol_gas_url', this.gasUrl);
             },
             
-            syncToGoogleSheet(data) {
-                 if(this.gasUrl.includes('YOUR_GOOGLE')) return; // skip if not set
+            syncToGoogleSheet(data, isManualSyncAll) {
+                 if(!this.gasUrl) {
+                     if(isManualSyncAll) alert('請先輸入 Google Apps Script URL');
+                     return;
+                 }
                  
-                 this.saveStatus = '同步中...';
-                 const payload = {
-                    name: data.name,
-                    tier: data.tier,
-                    tags: data.tags.join(', '),
-                    mainLink: data.mainLink,
-                    platforms: JSON.stringify(data.platforms)
-                };
+                 this.saveStatus = isManualSyncAll ? '正在同步所有資料...' : '正在同步...';
+                 
+                 // If syncing ALL (Manual Button), we send bulk or row by row. 
+                 // For simplicity here, we send the latest ONE or just log.
+                 // Ideally, GAS endpoint should accept an array to replace all.
+                 // Here we assume standard append logic for single entry.
+                 
+                 const payload = isManualSyncAll ? 
+                    { type: 'bulk', data: this.kols } : // You need to update GAS to handle bulk if needed
+                    {
+                        name: data.name,
+                        tier: data.tier,
+                        tags: data.tags.join(', '),
+                        mainLink: data.mainLink,
+                        platforms: JSON.stringify(data.platforms)
+                    };
 
                 fetch(this.gasUrl, {
                     method: 'POST',
@@ -560,7 +701,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    this.saveStatus = '已同步';
+                    this.saveStatus = '同步請求已發送';
+                    setTimeout(() => this.saveStatus = '', 3000);
+                }).catch(() => {
+                    this.saveStatus = '同步失敗';
                 });
             },
 
@@ -569,12 +713,7 @@
                 if (!this.searchQuery) return;
                 this.searchResults = [];
                 const mockNames = ['Alice Life', 'Foodie TW', 'Travel Bob', 'Beauty Jen', 'Tech Mike'];
-                const mockImages = [
-                    'https://i.pravatar.cc/150?img=1', 'https://i.pravatar.cc/150?img=5', 
-                    'https://i.pravatar.cc/150?img=8', 'https://i.pravatar.cc/150?img=9',
-                    'https://i.pravatar.cc/150?img=11'
-                ];
-
+                
                 for(let i=0; i<6; i++) {
                     const rand = Math.floor(Math.random() * 100);
                     let url = '#';
@@ -586,7 +725,7 @@
                         id: Date.now() + i,
                         name: `${mockNames[i%5]} ${rand}`,
                         category: q,
-                        avatar: mockImages[i%5],
+                        avatar: `https://i.pravatar.cc/150?img=${10+i}`,
                         url: url
                     });
                 }
