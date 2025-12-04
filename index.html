@@ -231,7 +231,7 @@
             </div>
             <div class="space-y-5 max-h-[65vh] overflow-y-auto no-scrollbar px-1">
                 <div>
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結 (輸入後自動帶出)</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-link absolute left-3 top-3.5 text-gray-400 text-xs"></i>
@@ -306,8 +306,8 @@
                 kols: [], allTags: ['美妝', '旅遊', '美食', '3C', '親子'], activeFilters: [], searchQuery: '', searchPlatform: 'IG',
                 platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YT'], searchResults: [], showTagInput: false, newTagTemp: '',
                 form: { id: null, name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' },
-                // 已更新為最新網址
-                gasUrl: 'https://script.google.com/macros/s/AKfycbxjVvUbewXQXW88bkBg4PDxoRTzQ-tHb0-CHRTdNR87_XJMgO2Io5b3iyDZXjcm1vpX1A/exec'
+                // 更新為最新的 GAS URL
+                gasUrl: 'https://script.google.com/macros/s/AKfycbwMVJ21NLGIjpbLIp8FFhpdh2ThhZVKN4XkqTEKV7b13eAOp6Y6GVgP5UecLTSEjXhCfA/exec'
             }
         },
         computed: {
@@ -343,6 +343,7 @@
             openModal() {
                 this.isEditing = false;
                 this.form = { id: Date.now(), name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' };
+                this.detectedUsername = '';
                 this.showModal = true; this.saveStatus = ''; this.showTagInput = false;
             },
             editKol(kol) {
