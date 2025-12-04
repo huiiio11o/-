@@ -49,6 +49,7 @@
     </script>
 
     <style>
+        /* 隱藏捲軸但保留功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
@@ -214,7 +215,7 @@
                 <p class="text-[10px] text-gray-400 mt-1">請確認您的 GAS 部署權限為「任何人」</p>
             </div>
             <div class="flex flex-col gap-3">
-                <button @click="syncToGoogleSheet(null, true)" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm"><i class="fa-solid fa-rotate mr-1"></i> 手動同步測試</button>
+                <button @click="syncToGoogleSheet(null, true)" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm"><i class="fa-solid fa-rotate mr-1"></i> 立即手動同步所有資料</button>
                 <button @click="showSettings = false" class="w-full py-3 bg-gray-200 dark:bg-black/20 text-gray-600 dark:text-gray-300 rounded-xl font-bold text-sm">關閉</button>
             </div>
             <p v-if="saveStatus" class="text-center text-xs mt-3 text-milktea-accent">{{ saveStatus }}</p>
@@ -230,7 +231,7 @@
             </div>
             <div class="space-y-5 max-h-[65vh] overflow-y-auto no-scrollbar px-1">
                 <div>
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結 (輸入後自動帶出所有平台)</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">主平台連結</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-link absolute left-3 top-3.5 text-gray-400 text-xs"></i>
@@ -240,9 +241,9 @@
                     </div>
                 </div>
                 
-                <!-- 連結確認區：這裡改成可以編輯的 Input，解決連結不正確的問題 -->
+                <!-- 連結確認區 -->
                 <div v-if="form.platforms.length > 0">
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">確認平台連結 (可修改)</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">平台連結</label>
                     <div class="space-y-2">
                         <div v-for="(p, idx) in form.platforms" :key="idx" class="flex gap-2 items-center">
                             <div class="w-8 flex justify-center text-milktea-accent text-lg"><i :class="getPlatformIcon(p.name)"></i></div>
@@ -305,7 +306,7 @@
                 kols: [], allTags: ['美妝', '旅遊', '美食', '3C', '親子'], activeFilters: [], searchQuery: '', searchPlatform: 'IG',
                 platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YT'], searchResults: [], showTagInput: false, newTagTemp: '',
                 form: { id: null, name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' },
-                gasUrl: 'https://script.google.com/macros/s/AKfycby_bix5kDlWfqBQvvSGraeDqY3ptuKN5YbkmG_ZrhriVZsvLqFn_Yb1F-bVts70PEjr/exec'
+                gasUrl: 'https://script.google.com/macros/s/AKfycbwiLZsbR070r1b5n6Gf5HJ5XbQVM1x3I65DqtJhOEcR9lmwPGEXJ1b3UL27Vl-jkF8xMQ/exec'
             }
         },
         computed: {
@@ -341,7 +342,6 @@
             openModal() {
                 this.isEditing = false;
                 this.form = { id: Date.now(), name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' };
-                this.detectedUsername = '';
                 this.showModal = true; this.saveStatus = ''; this.showTagInput = false;
             },
             editKol(kol) {
@@ -372,21 +372,12 @@
                 this.form.mainPlatform = platName;
                 if(!this.form.name && handle) this.form.name = handle;
                 
-                // Smart Gen logic
+                // Only add the main platform (No smart generation)
                 const existingIdx = this.form.platforms.findIndex(p => p.url === url);
-                if (existingIdx === -1) { this.form.platforms.unshift({ name: platName, url: url }); }
-                
-                if(handle) {
-                    const platformsToGen = ['IG', 'FB', 'YT', 'TikTok'];
-                    platformsToGen.forEach(p => {
-                        if(this.form.platforms.some(existing => existing.name === p)) return;
-                        let newUrl = '';
-                        if(p === 'IG') newUrl = `https://instagram.com/${handle}`;
-                        else if(p === 'FB') newUrl = `https://facebook.com/${handle}`;
-                        else if(p === 'YT') newUrl = `https://youtube.com/@${handle}`;
-                        else if(p === 'TikTok') newUrl = `https://tiktok.com/@${handle}`;
-                        this.form.platforms.push({ name: p, url: newUrl });
-                    });
+                if (existingIdx === -1) {
+                    this.form.platforms.unshift({ name: platName, url: url });
+                } else {
+                    this.form.platforms[existingIdx].name = platName;
                 }
             },
             removePlatform(idx) { this.form.platforms.splice(idx, 1); },
