@@ -290,7 +290,7 @@
             <div class="mb-4">
                 <label class="block text-xs font-bold text-milktea-accent mb-1">Google Apps Script URL</label>
                 <textarea v-model="gasUrl" rows="3" placeholder="https://script.google.com/..." class="w-full p-3 rounded-xl custom-input text-xs break-all"></textarea>
-                <p class="text-[10px] text-gray-400 mt-1">https://script.google.com/macros/s/AKfycbx1MEULEAnKVhUK8Thfb1BJKIocQlG_eBKqsbeWhu3nMugpKv6t9K1nFYicNcycUfTP-g/exec</p>
+                <p class="text-[10px] text-gray-400 mt-1">請貼上您的 Google Apps Script 網頁應用程式網址</p>
             </div>
             <div class="flex flex-col gap-3">
                 <button @click="syncToGoogleSheet(null, true)" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm">
@@ -458,7 +458,7 @@
                 },
                 
                 // GAS URL
-                gasUrl: '' 
+                gasUrl: 'https://script.google.com/macros/s/AKfycbx1MEULEAnKVhUK8Thfb1BJKIocQlG_eBKqsbeWhu3nMugpKv6t9K1nFYicNcycUfTP-g/exec' 
             }
         },
         computed: {
@@ -474,7 +474,7 @@
             const stored = localStorage.getItem('kol_app_data_v3');
             if (stored) this.kols = JSON.parse(stored);
             
-            // Load Settings
+            // Load Settings (If user manually changed it before, prioritize that, else use default)
             const storedGas = localStorage.getItem('kol_gas_url');
             if (storedGas) this.gasUrl = storedGas;
 
