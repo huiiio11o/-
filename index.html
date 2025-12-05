@@ -35,6 +35,11 @@
         .custom-input { background-color: rgba(93, 64, 55, 0.05); border: 1px solid rgba(93, 64, 55, 0.1); color: #5D4037; transition: all 0.3s; }
         html.dark .custom-input { background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); color: #EBE0D0; }
         .custom-input:focus { border-color: #A1887F; outline: none; box-shadow: 0 0 0 2px rgba(161, 136, 127, 0.2); }
+        
+        /* Loading Spinner */
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #A1887F; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; margin-right: 5px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .shake { animation: shake 0.5s infinite; }
@@ -151,7 +156,10 @@
                 <p class="text-[10px] text-gray-400 mt-1">請確認您的 GAS 部署權限為「任何人」</p>
             </div>
             <div class="flex flex-col gap-3">
-                <button @click="syncToGoogleSheet(null, true)" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm"><i class="fa-solid fa-rotate mr-1"></i> 立即手動同步所有資料</button>
+                <button @click="syncToGoogleSheet(null, true)" :disabled="isSubmitting" class="w-full py-3 bg-milktea-accent text-white rounded-xl font-bold text-sm disabled:opacity-50">
+                    <span v-if="isSubmitting"><div class="loader"></div>同步中...</span>
+                    <span v-else><i class="fa-solid fa-rotate mr-1"></i> 立即手動同步所有資料</span>
+                </button>
                 <button @click="showSettings = false" class="w-full py-3 bg-gray-200 dark:bg-black/20 text-gray-600 dark:text-gray-300 rounded-xl font-bold text-sm">關閉</button>
             </div>
             <p v-if="saveStatus" class="text-center text-xs mt-3 text-milktea-accent">{{ saveStatus }}</p>
@@ -227,7 +235,10 @@
             </div>
             <div class="mt-8 flex gap-3">
                 <button @click="showModal = false" class="flex-1 py-3.5 rounded-xl bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-bold text-sm">取消</button>
-                <button @click="saveKol" class="flex-[2] py-3.5 rounded-xl bg-milktea-accent text-white font-bold text-sm shadow-lg hover:brightness-110 transition-all">儲存資料</button>
+                <button @click="saveKol" :disabled="isSubmitting" class="flex-[2] py-3.5 rounded-xl bg-milktea-accent text-white font-bold text-sm shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span v-if="isSubmitting"><div class="loader"></div> 處理中...</span>
+                    <span v-else>儲存資料</span>
+                </button>
             </div>
         </div>
     </div>
@@ -238,7 +249,7 @@
     createApp({
         data() {
             return {
-                isDark: false, currentView: 'list', showModal: false, showSettings: false, isEditing: false, saveStatus: '', isFilterExpanded: true, isTagEditing: false,
+                isDark: false, currentView: 'list', showModal: false, showSettings: false, isEditing: false, saveStatus: '', isFilterExpanded: true, isTagEditing: false, isSubmitting: false,
                 kols: [], allTags: ['美妝', '旅遊', '美食', '3C', '親子'], activeFilters: [], searchQuery: '', searchPlatform: 'IG',
                 platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YT'], searchResults: [], showTagInput: false, newTagTemp: '',
                 form: { id: null, name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' },
@@ -280,10 +291,10 @@
                 this.isEditing = false;
                 this.form = { id: Date.now(), name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' };
                 this.detectedUsername = '';
-                this.showModal = true; this.saveStatus = ''; this.showTagInput = false;
+                this.showModal = true; this.saveStatus = ''; this.showTagInput = false; this.isSubmitting = false;
             },
             editKol(kol) {
-                this.isEditing = true; this.form = JSON.parse(JSON.stringify(kol)); this.showModal = true; this.saveStatus = '';
+                this.isEditing = true; this.form = JSON.parse(JSON.stringify(kol)); this.showModal = true; this.saveStatus = ''; this.isSubmitting = false;
             },
             toggleFormTag(tag) {
                 if (this.form.tags.includes(tag)) this.form.tags = this.form.tags.filter(t => t !== tag);
@@ -330,21 +341,44 @@
                 return map[name] || 'text-gray-400';
             },
             saveKol() {
+                if (this.isSubmitting) return; // Prevent double click
                 if (!this.form.name) return alert('請輸入名稱');
+                
+                this.isSubmitting = true; // Disable button immediately
+                
                 if (!this.form.mainPlatform && this.form.platforms.length > 0) this.form.mainPlatform = this.form.platforms[0].name;
                 if (this.isEditing) { const index = this.kols.findIndex(k => k.id === this.form.id); if (index !== -1) this.kols[index] = this.form; } 
                 else { this.kols.push(this.form); }
                 this.saveToLocalStorage();
+                
                 if(this.gasUrl) this.syncToGoogleSheet(this.form, false);
-                this.showModal = false;
+                
+                // Close modal after short delay to show interaction
+                setTimeout(() => {
+                    this.showModal = false;
+                    this.isSubmitting = false;
+                }, 500);
             },
             deleteKol(id) { if(confirm('確定刪除此資料？')) { this.kols = this.kols.filter(k => k.id !== id); this.saveToLocalStorage(); } },
             saveToLocalStorage() { localStorage.setItem('kol_app_data_v3', JSON.stringify(this.kols)); localStorage.setItem('kol_gas_url', this.gasUrl); },
             
             syncToGoogleSheet(data, isManualSyncAll) {
                  if(!this.gasUrl) { if(isManualSyncAll) alert('請先輸入 Google Apps Script URL'); return; }
+                 
                  this.saveStatus = isManualSyncAll ? '正在同步所有資料...' : '正在同步...';
-                 const payload = isManualSyncAll ? { type: 'bulk', data: this.kols } : { name: data.name, tier: data.tier, tags: data.tags.join(', '), mainLink: data.mainLink, platforms: data.platforms }; 
+                 if(isManualSyncAll) this.isSubmitting = true;
+
+                 // 確保資料結構包含所有需要的欄位，特別是 mainPlatform
+                 const payload = isManualSyncAll ? 
+                    { type: 'bulk', data: this.kols } : 
+                    { 
+                        name: data.name, 
+                        tier: data.tier, 
+                        tags: data.tags.join(', '), 
+                        mainLink: data.mainLink,
+                        mainPlatform: data.mainPlatform, // 確保單筆同步也傳送主平台
+                        platforms: data.platforms 
+                    }; 
                  
                  fetch(this.gasUrl, {
                     method: 'POST',
@@ -353,10 +387,14 @@
                     body: JSON.stringify(payload)
                 }).then(() => {
                     this.saveStatus = '同步請求已發送 (請確認活頁簿)';
-                    setTimeout(() => this.saveStatus = '', 5000);
+                    setTimeout(() => {
+                        this.saveStatus = '';
+                        this.isSubmitting = false;
+                    }, 5000);
                 }).catch(e => {
                     console.error(e);
                     this.saveStatus = '同步失敗';
+                    this.isSubmitting = false;
                 });
             },
             performSearch() {
