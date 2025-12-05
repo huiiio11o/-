@@ -35,11 +35,9 @@
         .custom-input { background-color: rgba(93, 64, 55, 0.05); border: 1px solid rgba(93, 64, 55, 0.1); color: #5D4037; transition: all 0.3s; }
         html.dark .custom-input { background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); color: #EBE0D0; }
         .custom-input:focus { border-color: #A1887F; outline: none; box-shadow: 0 0 0 2px rgba(161, 136, 127, 0.2); }
-        
         /* Loading Spinner */
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #A1887F; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; margin-right: 5px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .shake { animation: shake 0.5s infinite; }
@@ -63,8 +61,12 @@
 
     <!-- Tabs -->
     <div class="flex sticky top-[72px] z-20 px-4 pb-2 gap-3 bg-milktea-bg/80 dark:bg-milktea-dark/80 backdrop-blur-md transition-colors duration-300">
-        <button @click="currentView = 'list'" :class="currentView === 'list' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'" class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">我的名單</button>
-        <button @click="currentView = 'search'" :class="currentView === 'search' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'" class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">自動協尋</button>
+        <button @click="currentView = 'list'" :class="currentView === 'list' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'" class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">
+            我的名單 ({{ kols.length }})
+        </button>
+        <button @click="currentView = 'search'" :class="currentView === 'search' ? 'bg-milktea-accent text-white shadow-soft' : 'bg-white/40 dark:bg-black/20 text-milktea-accent'" class="flex-1 py-2.5 text-center rounded-2xl transition-all duration-300 font-bold text-sm tracking-wide border border-white/10">
+            自動協尋
+        </button>
     </div>
 
     <!-- VIEW: LIST -->
@@ -150,6 +152,15 @@
     <div v-if="showSettings" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
         <div class="bg-white dark:bg-milktea-darkCard w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-slide-up">
             <h2 class="text-lg font-bold mb-4 text-center">雲端設定</h2>
+            
+            <!-- User Selection -->
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-milktea-accent mb-1">我是誰 (同步時記錄)</label>
+                <select v-model="currentUser" @change="saveToLocalStorage" class="w-full p-3 rounded-xl custom-input text-xs appearance-none bg-transparent">
+                    <option v-for="user in users" :key="user" :value="user" class="text-black">{{ user }}</option>
+                </select>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-xs font-bold text-milktea-accent mb-1">Google Apps Script URL</label>
                 <textarea v-model="gasUrl" rows="3" class="w-full p-3 rounded-xl custom-input text-xs break-all"></textarea>
@@ -187,7 +198,7 @@
                 
                 <!-- 連結確認區 (可修改) -->
                 <div v-if="form.platforms.length > 0">
-                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">平台連結</label>
+                    <label class="block text-xs font-bold text-milktea-accent mb-1.5">平台連結 (可修改)</label>
                     <div class="space-y-2">
                         <div v-for="(p, idx) in form.platforms" :key="idx" class="flex gap-2 items-center">
                             <div class="w-8 flex justify-center text-milktea-accent text-lg"><i :class="getPlatformIcon(p.name)"></i></div>
@@ -253,7 +264,12 @@
                 kols: [], allTags: ['美妝', '旅遊', '美食', '3C', '親子'], activeFilters: [], searchQuery: '', searchPlatform: 'IG',
                 platformOptions: ['IG', 'FB', '小紅書', '抖音', '部落格', 'YT'], searchResults: [], showTagInput: false, newTagTemp: '',
                 form: { id: null, name: '', mainLink: '', mainPlatform: '', tier: '初級 (1k-3k)', tags: [], platforms: [], avatar: '' },
-                // 更新為最新的 GAS URL
+                
+                // 使用者管理
+                users: ['使用者 1', '使用者 2', '使用者 3'],
+                currentUser: '使用者 1',
+                
+                // GAS URL
                 gasUrl: 'https://script.google.com/macros/s/AKfycbzAFMdwbeGbh7FO-3HH638NSrDg8SXlTpnNIgKTdvmUM8MPN3g3ipqHLuPTXjCBTpg/exec'
             }
         },
@@ -268,6 +284,10 @@
             if (stored) this.kols = JSON.parse(stored);
             const storedGas = localStorage.getItem('kol_gas_url');
             if (storedGas) this.gasUrl = storedGas;
+            // Load User
+            const storedUser = localStorage.getItem('kol_current_user');
+            if (storedUser) this.currentUser = storedUser;
+
             const tagSet = new Set(this.allTags);
             this.kols.forEach(k => k.tags.forEach(t => tagSet.add(t)));
             this.allTags = Array.from(tagSet);
@@ -341,10 +361,10 @@
                 return map[name] || 'text-gray-400';
             },
             saveKol() {
-                if (this.isSubmitting) return; // Prevent double click
+                if (this.isSubmitting) return; 
                 if (!this.form.name) return alert('請輸入名稱');
                 
-                this.isSubmitting = true; // Disable button immediately
+                this.isSubmitting = true; 
                 
                 if (!this.form.mainPlatform && this.form.platforms.length > 0) this.form.mainPlatform = this.form.platforms[0].name;
                 if (this.isEditing) { const index = this.kols.findIndex(k => k.id === this.form.id); if (index !== -1) this.kols[index] = this.form; } 
@@ -353,14 +373,17 @@
                 
                 if(this.gasUrl) this.syncToGoogleSheet(this.form, false);
                 
-                // Close modal after short delay to show interaction
                 setTimeout(() => {
                     this.showModal = false;
                     this.isSubmitting = false;
                 }, 500);
             },
             deleteKol(id) { if(confirm('確定刪除此資料？')) { this.kols = this.kols.filter(k => k.id !== id); this.saveToLocalStorage(); } },
-            saveToLocalStorage() { localStorage.setItem('kol_app_data_v3', JSON.stringify(this.kols)); localStorage.setItem('kol_gas_url', this.gasUrl); },
+            saveToLocalStorage() { 
+                localStorage.setItem('kol_app_data_v3', JSON.stringify(this.kols)); 
+                localStorage.setItem('kol_gas_url', this.gasUrl); 
+                localStorage.setItem('kol_current_user', this.currentUser);
+            },
             
             syncToGoogleSheet(data, isManualSyncAll) {
                  if(!this.gasUrl) { if(isManualSyncAll) alert('請先輸入 Google Apps Script URL'); return; }
@@ -368,22 +391,21 @@
                  this.saveStatus = isManualSyncAll ? '正在同步所有資料...' : '正在同步...';
                  if(isManualSyncAll) this.isSubmitting = true;
 
-                 // 確保資料結構包含所有需要的欄位，特別是 mainPlatform
                  const payload = isManualSyncAll ? 
-                    { type: 'bulk', data: this.kols } : 
+                    { type: 'bulk', data: this.kols, user: this.currentUser } : 
                     { 
                         name: data.name, 
                         tier: data.tier, 
                         tags: data.tags.join(', '), 
-                        mainLink: data.mainLink,
-                        mainPlatform: data.mainPlatform, // 確保單筆同步也傳送主平台
-                        platforms: data.platforms 
+                        mainLink: data.mainLink, 
+                        platforms: data.platforms,
+                        user: this.currentUser // Include User ID
                     }; 
                  
                  fetch(this.gasUrl, {
                     method: 'POST',
                     mode: 'no-cors', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CRITICAL FIX for GAS
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 }).then(() => {
                     this.saveStatus = '同步請求已發送 (請確認活頁簿)';
